@@ -13,6 +13,12 @@ Follow these five steps and implement
 using /usr/local/cs/bin/python3 on the SEASnet GNU/Linux servers.
 
 Discover the .git directory. 
+
+os.getcwd() =returns a string of the current working directory
+os.path.exists() =checks if the path exists 
+os.path.dirname( 'some path' ) =returns a string of the parent directory from the path
+
+
 Inside a directory, when the script topo_order_commits.py 
     (which doesn’t have to reside in the same directory) is invoked, 
     the script should first determine where the top level Git directory is. 
