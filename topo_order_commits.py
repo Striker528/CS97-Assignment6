@@ -4,7 +4,7 @@ import zlib
 import copy
 
 #need regex to get the parent from the decompressed file
-import re
+#import re
 from collections import deque
 
 class CommitNode:
@@ -13,8 +13,9 @@ class CommitNode:
         :type commit_hash: str
         """
         self.commit_hash = commit_hash
-        self.parents = set()
-        self.children = set()
+        #making parents and children lists instead of set()
+        self.parents = []
+        self.children = []
 
 #Step 1
 def get_git_directory():
@@ -56,31 +57,6 @@ def get_list_local_branches(git_dir, prefix = ''):
             branchList.append(get_list_local_branches(namePath, prefix+ content +'/'))
     return branchList
 
-
-    #Normal loop of getting all the directores in one list and looping through that. 
-    #Get all the folders in the .git repo
-
-    #go into /.git 's child directory of refs/heads
-    os.chdir(git_dir + '/refs/heads')
-
-    contents_dir = os.listdir(git_dir)
-    #starts with the master or main branch (or the end of the commit history)
-    local_branch_heads = []
-    #Then loop through all the folders
-    for content in contents_dir:
-        #if there is a file
-        if (os.path.isfile(content)):
-            #In each folder, open up the file
-            file = open(content, 'r')
-            #read the first line from the file and append that to the branch heads
-            #[branch, commit hash that branch points too]
-            local_branch_heads.append[content, file.readline().strip()]
-        #else, if the item is a directory
-        else:
-            #add the directory to the directory list
-            contents_dir.append(content)
-    return local_branch_heads
-
 #Step 3
 def build_commit_graph(git_dir, local_branch_heads): 
     #Represents your graph
@@ -114,41 +90,49 @@ def build_commit_graph(git_dir, local_branch_heads):
         #testing
         #print("commmit_hash 888888888888888888888888888888888888: " + commit_hash)
 
-        #to get the first two chars = [0:2]
-        #to get the 3rd char to the end = [2:]
+        #to get the first two chars = [0:2], to get the 3rd char to the end = [2:]
         commit_file = current_directory + '/' + commit_hash[0:2] + '/' + commit_hash[2:]
         compressed_contents = open(commit_file, 'rb').read()
         #.decode() to convert it to a string
         decompressed_contents = zlib.decompress(compressed_contents).decode()
 
         #testing
-        print(decompressed_contents)
+        #print(decompressed_contents)
+
+        split_file = decompressed_contents.split()
+
+        #if there are multiple parents
+        current_loc = 0
+        for file in split_file:
+            if (file == "parent"):
+                commit.parents.append(split_file[current_loc + 1])
+                current_loc = current_loc + 1
+            else:
+                current_loc = current_loc + 1
 
 
-        #only way to get the parents is with regex
-        #https://www.programiz.com/python-programming/regex
-        # ^ : starts with
-        # $ : ends with
-        # .* : (*)zero or more occurances with (.)any characters
-        # \s : matches where a string contains any whitespae character
-        # \S : matches where a string contains any non-whitspace character
-        # re.finall(pattern, string) : returns a list of strings containg all matches
-        # re.search(pattern, string) : looks for the first location wehre the RegEx pattern produces a match
-            #with the string
-        parent_commit = re.findall("^parent\s .* \s$", decompressed_contents)
+        #parent_commit = split_file[4]
 
         #testing 
-        print("parent_commit is " + parent_commit)
+        #print("parent_commit is " + parent_commit)
+        #print("parent_commit in list is ")
+        #for item in commit.parents:
+            #print(item)
 
-
-        commit.parents.append(parent_commit)
+        #commit.parents.append(parent_commit)
         for p in commit.parents:
             if p not in visited:
                 #Replace with Code - What do we do if p isn’t in visited?
                 visited.add(p)
+                #or
+                stack.append(p)
+
             if p not in commit_nodes:
                 #Replace with Code - What do we do if p isn’t in commit_nodes (graph)?    
+                
                 commit_nodes[p.commit_hash] = p
+                #or
+                stack.append(p)
             
             #Replace with Code - Record that commit_hash is a child of commit node p
             commit_hash.parents.append(p)
@@ -184,7 +168,6 @@ def topological_sort(commit_nodes):
 
             # Replace with code - Remove child hash from parent commit children
             parent_hash.children.remove(commit_hash)
-
 
             # Replace with code - How do we check if parent has no children
             if(parent_hash.children.len == 0):
