@@ -18,6 +18,14 @@ os.getcwd() =returns a string of the current working directory
 os.path.exists() =checks if the path exists 
 os.path.dirname( 'some path' ) =returns a string of the parent directory from the path
 
+testing:
+directory: 
+    topo-ordered-commits-test-suite/tests/repo_fixture/example-repo-1
+command:
+    python3 ../../../../topo_ordered_commits.py
+
+Had to remove all the spaces as they were not configured correctly
+
 
 Inside a directory, when the script topo_order_commits.py 
     (which doesn’t have to reside in the same directory) is invoked, 
