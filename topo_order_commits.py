@@ -1,3 +1,13 @@
+#testing:
+#directory: 
+    #topo-ordered-commits-test-suite/tests/repo_fixture/example-repo-1
+#command:
+    #python3 ../../../../topo_ordered_commits.py
+
+#Had to remove all the spaces as they were not configured correctly
+
+#git log --all --graph --oneline
+
 import os
 import sys
 import zlib
@@ -44,30 +54,59 @@ def get_list_local_branches(git_dir, prefix = ''):
     #testing
     #print("current_directory: OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO" + git_dir)
 
-    branchList= []
+    branch_list= []
     contents_dir = os.listdir(git_dir)
     for content in contents_dir:
-        namePath = git_dir + '/' + content
-        isFile = os.path.isfile(namePath)
-        if isFile == True:
-            openFile = open(namePath, 'r')
-            commitLine = openFile.readline().strip()
-            branchList.append([prefix + content, commitLine])
+        name_path = git_dir + '/' + content
+        is_file = os.path.isfile(name_path)
+        if is_file == True:
+            open_file = open(name_path, 'r')
+            commit_line = open_file.readline().strip()
+            branch_list.append([prefix + content, commit_line])
         else:
-            branchList.append(get_list_local_branches(namePath, prefix+ content +'/'))
-    return branchList
+            #print(f"get_list_local_branches: {get_list_local_branches(name_path, prefix + content +'/')}")
+            #[0]: made a list, but jsut grap the first element from tat list
+            # stoping the contious nesting
+            branch_list.append(get_list_local_branches(name_path, prefix + content +'/')[0])
+    return branch_list
+
+#Step 2.5
+def converting_to_head_to_branches(local_branch_heads):
+    #converting local_branch_heads to head_to_branches
+    #head_to_branches: dict {key(hash):value(list of any branches that point to it)}
+    head_to_branches = {}
+
+    #print(f"local_branch_head: {local_branch_heads}")
+
+    for item in local_branch_heads:
+        if item[1] in head_to_branches:
+            head_to_branches[item[1]].append(item[0])
+        else:
+            head_to_branches[item[1]] = [item[0]] 
+
+    #print(f"head_to_branches: {head_to_branches}")
+    return head_to_branches
 
 #Step 3
 def build_commit_graph(git_dir, local_branch_heads): 
     #Represents your graph
     commit_nodes = {}
     visited = set()
-    stack = local_branch_heads
+
+    stack = []
+    for item in local_branch_heads:
+        stack.append(item[1])
+        #torubles from old double list, as some commits were not [][], so just need the commits
+        #print('item: 0000000000' + item[1])
+
+
     while stack:
         #Replace with Code - Get the next element from stack, store it in commit_hash, and remove it from stack
         #main or master or origin is the first element
         #need 2D array to get the second element of the first element
-        commit_hash = stack[0][1]
+
+        #print(f'stack: OOOOOOOOOOOOOOO {stack}')
+        commit_hash = stack[0]
         stack.remove(stack[0])
 
         if commit_hash in visited:
@@ -120,23 +159,22 @@ def build_commit_graph(git_dir, local_branch_heads):
             #print(item)
 
         #commit.parents.append(parent_commit)
+        #print(f'commit.parents is {commit.parents}')
         for p in commit.parents:
             if p not in visited:
                 #Replace with Code - What do we do if p isn’t in visited?
-                visited.add(p)
-                #or
+                #Need to add hash to processing list
                 stack.append(p)
 
             if p not in commit_nodes:
-                #Replace with Code - What do we do if p isn’t in commit_nodes (graph)?    
-                
-                commit_nodes[p.commit_hash] = p
-                #or
-                stack.append(p)
+                #Replace with Code - What do we do if p isn’t in commit_nodes (graph)?
+                #Need to create a parent node and add it to the graph
+                new_parent_commit_node = CommitNode(p)
+                commit_nodes[p] = new_parent_commit_node
             
             #Replace with Code - Record that commit_hash is a child of commit node p
-            commit_hash.parents.append(p)
-            p.children.append(commit_hash)
+            parent_commit = commit_nodes[p]
+            parent_commit.children.append(commit_hash)
 
     return commit_nodes
 
@@ -154,7 +192,7 @@ def topological_sort(commit_nodes):
     # If the commit has no children, we can process it
     for commit_hash in copy_graph:
         if len(copy_graph[commit_hash].children) == 0:
-            no_children.append(commit)
+            no_children.append(commit_hash)
 
     #Loop through until all commits are processed
     while len(no_children) > 0:
@@ -164,14 +202,20 @@ def topological_sort(commit_nodes):
         # And add parent to processing set if it has no more children after
         for parent_hash in list(copy_graph[commit_hash].parents):
             # Replace with code - Remove parent hash from current commit parents
-            commit_hash.parents.remove(parent_hash)
+            # need to get the commit_hash object from the graph (commit_nodes)
+            # to access the parent
+            copy_graph[commit_hash].parents.remove(parent_hash)
 
             # Replace with code - Remove child hash from parent commit children
-            parent_hash.children.remove(commit_hash)
+            # need to get the commit_hash object from the graph (commit_nodes)
+            # to access the parent
+            copy_graph[parent_hash].children.remove(commit_hash)
 
             # Replace with code - How do we check if parent has no children
-            if(parent_hash.children.len == 0):
-                no_children.append(parent)
+            # need to get the commit_hash object from the graph (commit_nodes)
+            # to access the parent
+            if(len(copy_graph[parent_hash].children) == 0):
+                no_children.append(parent_hash)
 
     # Error check at the end
     if len(result) < len(commit_nodes):
@@ -209,6 +253,11 @@ def topo_order_commits():
     #Get list of local branch names (can be helper function)
     local_branch_heads = get_list_local_branches(git_dir_refs_heads)
 
+    #step 2.5
+    #converting local_branch_heads to dict {key(hash):value(list of any branches that point to it)}
+    #to head_to_branches
+    head_to_branches = converting_to_head_to_branches(local_branch_heads)
+
     #Step 3
     #Build the commit graph (can be helper function)
     commit_nodes = build_commit_graph(git_dir, local_branch_heads)
@@ -217,10 +266,17 @@ def topo_order_commits():
     #Topologically sort the commit graph (can be helper fnction)
     topo_ordered_commits = topological_sort(commit_nodes)
 
+    #testing
+    #print(f'topo_order_commits: llllllllllllllllllllllllllll {topo_ordered_commits}')
+
     #Step 5
     #Print the sorted order (can be helper function)
-    print_topo_ordered_commits_with_branch_names(commit_nodes, topo_ordered_commits, local_branch_heads)
+    print_topo_ordered_commits_with_branch_names(commit_nodes, topo_ordered_commits, head_to_branches)
 
 
 if __name__ == '__main__':
     topo_order_commits()
+
+#strace
+
+#ran (strace -f -o topo-test.tr pytest) in the topo ordered commits file and got everything back green and good

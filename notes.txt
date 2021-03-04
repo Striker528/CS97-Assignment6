@@ -26,6 +26,8 @@ command:
 
 Had to remove all the spaces as they were not configured correctly
 
+git log --all --graph --oneline
+
 
 Inside a directory, when the script topo_order_commits.py 
     (which doesn’t have to reside in the same directory) is invoked, 
@@ -100,3 +102,37 @@ The commit hashes in the sticky starts and sticky ends are not considered as par
 They are printed only as a visual guide. 
 So even if a commit hash has already appeared in a sticky start or sticky end, 
     it still must be printed as part of the normal sequence of topologically ordered commit output.
+
+ ['3c25412d2521b8f77778de839acb0350492c3634', '59961945fd47abdcf8d526154befb24810fa9a79', 
+ 'dd9515b11ebcab015a8a91b494097d06827df5a5', '0e7b5db7a6ebfe3fa72598d0d7919d64bcfc2ab7', 
+ '5860da5c2f6181541566190b2f704da20e4753bc', '5fe5a724533a4970c19fa7bc0986c1f646a07e4c', 
+ '55bb5940a549a475c768b503cb1b76a6f029d444', 'b5d29544d6c69bc654588fbf22071bdaadbc0d23', 
+ '831c585eaada1f7fb3b9f2751b8019dbccc59d94', '127169a28b68c1f09a6f28e289b7aafafe3105a3', 
+ 'f72697fe0dbf5455b61ab586346578710fbfb6fd', '5e6f9ac703e879de3134990765d2e5dee7ee7ed1', 
+ '777e41d9a9ba12b9a485300e16fa4405a4f633c0', '6ad43a64e81fff1fd81de5d2fb6a7c99a71f60a9', 
+ 'a109cb0e9f18fd0f0106216fccb9c9719e5119db']
+
+586 has to come after 3c25412d2521b8f77778de839acb0350492c3634
+
+* 3c25412 (origin/b12, origin/b11, b12, b11) b11 3
+* 5860da5 b11 2
+* b5d2954 b11 1
+| * 0e7b5db (origin/b9, b9) b9 1
+|/
+| * 5996194 (HEAD -> b3, origin/z, origin/b4, origin/b3, z, b4) b3 1
+| * 5fe5a72 (origin/b2, b2) b2 2
+| * 831c585 b2 1
+| | * dd9515b (origin/b1, b1) b1 5
+| | * 55bb594 b1 4
+| |/
+| * 127169a (origin/b8, b8) b1 3
+| * f72697f b1 2
+| * 5e6f9ac b1 1
+|/
+* 777e41d (origin/master, origin/b13, origin/b10, master, b13, b10) m3
+* 6ad43a6 m2
+* a109cb0 init
+
+#top to bottom 
+#this is a valid topo sort
+#bottom parent, above it is a child that has to come before it
